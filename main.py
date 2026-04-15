@@ -1,0 +1,1 @@
+import pandas as pdpd.set_option('display.max_columns', None)dt = pd.read_csv('workout_data.csv')print(dt.head())
