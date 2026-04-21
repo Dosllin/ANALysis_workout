@@ -1,10 +1,9 @@
-import operator
-
 import pandas as pd
-import datetime
+
 pd.set_option('display.max_columns', None)
 df = pd.read_csv('workout_data.csv')
-import re
+
+
 # print(df.head())
 
 # checklist
@@ -31,6 +30,16 @@ class Analysis(object):
     def __init__(self, df):
         self.df = df
         self._converter()
+        if not self._valid_col():
+            raise ValueError("DataFrame columns have incorrect types")
+
+    def _valid_col(self):
+        if self.df['Date'].dtypes == 'datetime64[us]' and all(self.df[col].dtype == 'str' for col in ['Workout_Split', 'Exercise']) and \
+            all(self.df[col].dtype == 'int64' for col in ['Sets', 'Reps', 'RPE', 'Duration_min']) and self.df['Weight_kg'].dtype == 'float64':
+            print(1)
+            return True
+        else:
+            return False
 
     def _converter(self):
         self.df['Date'] = pd.to_datetime(df['Date'])
@@ -56,6 +65,27 @@ class Analysis(object):
 
         return last_month - first_month
 
+    def hard_exercise(self):
+        stats = self.df.groupby('Workout_Split').agg({'Duration_min': 'mean', 'RPE': 'mean'})
+        max_duration_min = stats['Duration_min'].max()
+        min_duration_min = stats['Duration_min'].min()
+        duration_dif = max_duration_min - min_duration_min
+        max_rpe = stats['RPE'].max()
+        min_rpe = stats['RPE'].min()
+        rpe_dif = max_rpe - min_rpe
+        if duration_dif < 5 and rpe_dif < 0.5:
+            print(f"План сбалансирован: среднее время всех сплитов варьируется от {min_duration_min:.1f} до {max_duration_min:.1f} мин.")
+            print(f"Субъективная тяжесть (RPE) также равномерна: {min_rpe:.1f} - {max_rpe:.1f} из 10.")
+        else:
+            hardest_split = stats['RPE'].idxmax()
+            longest_split = stats['Duration_min'].idxmax()
+            print("Обнаружен дисбаланс в тренировочном плане!")
+            if hardest_split == longest_split:
+                print(
+                    f'Тренировки {hardest_split} объективно самые тяжелые: они длятся {max_duration_min:.1f} мин. и имеют самый высокий средний показатель тяжести (RPE {max_rpe:.1f}/10).')
+            else:
+                print(f"Самый тяжелый день по RPE: {hardest_split} ({max_rpe:.1f}/10)")
+                print(f"Самый долгий день: {longest_split} ({max_duration_min:.1f} мин)")
 
 
 # df['Date'] = pd.to_datetime(df['Date'])
@@ -64,13 +94,13 @@ class Analysis(object):
 # print(start_month)
 # print(int(str(max(df['Date'])).split('-')[1])+6)
 a = Analysis(df)
-
+a.hard_exercise()
 # 1 осозноный вывод
-arr_exercise = list(df['Exercise'].unique())
-dict_exercise = {}
-for exercise in arr_exercise:
-    changes = a.max_weight_changes(exercise)
-    # print(f'{exercise}: +{changes}')
-    dict_exercise[exercise] = changes
-exercise_with_max_changes, weight = max(dict_exercise.items(), key=operator.itemgetter(1))
-print(exercise_with_max_changes, weight)
+# arr_exercise = list(df['Exercise'].unique())
+# dict_exercise = {}
+# for exercise in arr_exercise:
+#     changes = a.max_weight_changes(exercise)
+#     # print(f'{exercise}: +{changes}')
+#     dict_exercise[exercise] = changes
+# exercise_with_max_changes, weight = max(dict_exercise.items(), key=operator.itemgetter(1))
+# print(exercise_with_max_changes, weight)
