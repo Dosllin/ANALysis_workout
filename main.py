@@ -170,6 +170,19 @@ class Analysis(object):
         return (f"Самый активный ('хардкорный') день за всё время: {formated_date}\n"
                 f"В этот день суммарный поднятый вес превысил: {int(max_tonnage)} кг. за сессию\n"
                 f"Тренировка длилась рекордные {int(max_duration)} минут, а средняя тяжесть (RPE) составила {avg_rpe:.1f}/10")
+
+    # Генераторы
+    def unique_exercise(self):
+        exercises = self.df['Exercise'].unique()
+        for exercise in exercises:
+            yield exercise
+
+    def get_hardcore_day(self, user_rpe = 9.0):
+        days = self.df.groupby('Date')['RPE'].mean()
+        for day, rpe in days.items():
+            if rpe >= user_rpe:
+                yield f'Хардкорный день: {day.strftime("%d.%m.%Y")} с RPE {rpe:.1f}/10'
+
 # df['Date'] = pd.to_datetime(df['Date'])
 #
 # start_month = max(df['Date']).month
@@ -179,7 +192,9 @@ a = Analysis(df)
 # a.hard_exercise()
 # print(a.max_weight())
 # print(a.rpe_correlation())
-print(a.pick_activiti())
+# print(a.pick_activiti())
+for i in a.get_hardcore_day(1):
+    print(i)
 # 1 осозноный вывод
 # arr_exercise = list(df['Exercise'].unique())
 # dict_exercise = {}
