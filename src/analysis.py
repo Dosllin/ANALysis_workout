@@ -1,8 +1,6 @@
-from unittest import result
-
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from numpy.ma.extras import median
 
 from src.decorators import log_action, format_output
 from src.data_loader import load_data
@@ -19,8 +17,11 @@ from src.data_loader import load_data
 # Duration_min - общая длительность тренировки в минутах
 
 class Analysis(object):
-    def __init__(self):
-        self.df = load_data()
+    def __init__(self, df=None):
+        if df is None:
+            self.df = load_data()
+        else:
+            self.df = df
         self.dict_month = {
             1: 'Январь',
             2: "Февраль",
@@ -199,6 +200,7 @@ class Analysis(object):
 
         return result
 
+    @log_action
     @format_output("ЗАЛ СЛАВЫ (ТВОИ ДОСТИЖЕНИЯ)")
     def get_achievements(self):
         achievements = []
@@ -223,16 +225,37 @@ class Analysis(object):
 
         return "\n".join(achievements)
 
+    @log_action
+    def plot_graph(self, exercise):
+        df_ex = self.df[self.df['Exercise'] == exercise].sort_values('Date')
+
+        if df_ex.empty:
+            print(Fore.RED + f'Нет данных для построения графика: {exercise}')
+
+        plt.figure(figsize=(10, 5))  # размер окна
+
+        plt.plot(df_ex['Date'], df_ex['Weight_kg'], marker='o', linestyle='-', color='#00a8ff', linewidth=2)  # Линия
+
+        plt.title(f'Прогресс рабочих весов: {exercise}', fontsize=14, fontweight='bold')
+        plt.xlabel('Дата тренировки', fontsize=12)
+        plt.ylabel('Рабочий вес (кг)', fontsize=12)
+
+        plt.grid(True, linestyle='--', alpha=0.7)  # сетка
+
+        plt.xticks(rotation=45)
+        plt.tight_layout()  # Подгоняет отступы
+
+        print(f"⏳ Открываю график для {exercise} в новом окне...")
+        plt.show()
+
     # Генераторы
     def unique_exercise(self):
         exercises = self.df['Exercise'].unique()
         for exercise in exercises:
             yield exercise
 
-    def get_hardcore_day(self, user_rpe=9.0):
+    def get_hardcore_days(self, user_rpe=9.0):
         days = self.df.groupby('Date')['RPE'].mean()
         for day, rpe in days.items():
             if rpe >= user_rpe:
                 yield f'Хардкорный день: {day.strftime("%d.%m.%Y")} с RPE {rpe:.1f}/10'
-
-
