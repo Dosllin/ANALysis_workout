@@ -2,7 +2,6 @@ from datetime import datetime
 import os
 from functools import wraps
 
-
 if not os.path.exists('logs'):
     os.mkdir('logs')
 
@@ -17,7 +16,7 @@ def log_action(func):
         with open(LOG_FILE_PATH, 'a', encoding='utf-8') as log_file:
             log_file.write(f"[{action_time}] ЗАПУСК функции: {func.__name__}\n")
             if len(args) > 1 or kwargs:
-                log_file.write(f"    Параметры поиска: args={args[1:]}, kwargs={kwargs}\n") # [1:] убираем self
+                log_file.write(f"    Параметры поиска: args={args[1:]}, kwargs={kwargs}\n")  # [1:] убираем self
         try:
             result = func(*args, **kwargs)
             with open(LOG_FILE_PATH, 'a', encoding='utf-8') as log_file:
@@ -31,14 +30,18 @@ def log_action(func):
 
     return wrapper
 
-def format_output(title):
+
+def format_output(title, on_disp=True):
     def decorator_format_output(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             print(f"\n{'=' * 10} {title.upper()} {'=' * 10}")
             result = func(*args, **kwargs)
-            print(result)
+            if on_disp:
+                print(result)
             print("=" * (22 + len(title)))
             return result
+
         return wrapper
+
     return decorator_format_output
