@@ -2,10 +2,12 @@ from datetime import datetime
 import os
 import pandas as pd
 from colorama import init, Fore
+from src.decorators import log_action
 
 init(autoreset=True)
 
 
+@log_action
 def check_data():
     if not os.path.exists('workout_data.csv'):
         print("Нужно создать базу тренеровок!")
@@ -14,6 +16,7 @@ def check_data():
         create_data(df)
 
 
+@log_action
 def create_data(df):
     print(Fore.CYAN + "=== Режим добавления тренировок ===")
 
@@ -31,7 +34,7 @@ def create_data(df):
             valid_date = datetime.strptime(user_data, '%Y-%m-%d')
             date = valid_date.strftime('%Y-%m-%d')
         except ValueError:
-            print(Fore.RED +'Некоретный ввод даты, пример даты: 2021-12-31')
+            print(Fore.RED + 'Некоретный ввод даты, пример даты: 2021-12-31')
             continue
         workout_split = input("Введите тип тренировки (Chest/Triceps, Back/Biceps, Legs/Shoulders): ")
         exercise = input("Введите конкретное упражнение (Deadlift, Pull-up, Squat и т.д.): ")
@@ -48,7 +51,7 @@ def create_data(df):
                 weight_kg = float(input("Введите рабочий вес (kg): "))
                 break
             except ValueError:
-                print(Fore.RED +'Введите число (Можно не целое, например 40.1)!!!!')
+                print(Fore.RED + 'Введите число (Можно не целое, например 40.1)!!!!')
 
         while True:
             try:
@@ -58,14 +61,14 @@ def create_data(df):
                 else:
                     print('Введите число от 1-10!!!!')
             except ValueError:
-                print(Fore.RED +'Введите целое число!!!')
+                print(Fore.RED + 'Введите целое число!!!')
 
         while True:
             try:
                 duration_min = int(input("Введите общая длительность тренировки (min): "))
                 break
             except ValueError:
-                print(Fore.RED +"Введите целое число!")
+                print(Fore.RED + "Введите целое число!")
 
         new_row = {
             'Date': date,
@@ -85,6 +88,7 @@ def create_data(df):
     print(Fore.GREEN + f"\n💾 Данные успешно сохранены в 'workout_data.csv'. Всего записей: {len(df)}")
 
 
+@log_action
 def load_data(check_y_or_n=True):
     if check_y_or_n:
         check_data()
