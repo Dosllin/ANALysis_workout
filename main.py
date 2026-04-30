@@ -1,11 +1,12 @@
-import pandas as pd
 import argparse
+from fake_progress_bars import progress_bar
 from src.analysis import Analysis
 from src.data_loader import create_data, load_data
 from src.decorators import format_output
 from src.display import interactive_menu
+from colorama import init, Fore
+init(autoreset=True)
 
-pd.set_option('display.max_columns', None)
 
 
 # checklist
@@ -14,13 +15,16 @@ pd.set_option('display.max_columns', None)
 # visual - in_process
 
 
-@format_output('Меню', False)
+
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="Анализатор тренировок (CLI)")
     parser.add_argument(
         'command',
         nargs='?',
-        choices=["menu", "add", "analyze", 'stats', 'report', 'hardcore_days'],
+        choices=["menu", "add", "analyze", 'stats', 'report', 'hardcore_days', 'motivation'],
         default='menu',
         help='Команда для выполнения: menu, add, analyze, stats, report, hardcore_days'
     )
@@ -46,6 +50,18 @@ def main():
         print('#' * 50)
         print("📄 ГЕНЕРАЦИЯ ПОЛНОГО ОТЧЕТА ПО ТРЕНИРОВКАМ 📄")
         print('#' * 50)
+
+        progress_bar(
+            time=5,  # Время завершения индикатора
+            size=50,  # Размер индикатора в символах
+            step=10,  # Увеличение прогресса на каждом шаге
+            label='Обработка...',  # Метка перед индикатором
+            variability=0.1,  # Допустимое отклонение времени каждого шага
+            progress='◼️',  # Символ, отображающий текущий прогресс
+            remaining='·',  # Символ для оставшегося процента
+            outside='⏺',  # Символ для границы
+            percentage=True  # Отображать процент справа от индикатора
+        )
 
         # 1 вывод
         print('=' * 10, 'Прогресс в упражнении'.capitalize(), '=' * 10)
@@ -82,6 +98,15 @@ def main():
         for day in analys.get_hardcore_day(user_rpe):
             print(f'-{day}')
         print('#'*50)
+
+    elif args.command == 'motivation':
+        quotes = [
+            "Легкие веса не делают тебя сильнее! 💪",
+            "No pain, no gain! 🦍",
+            "Дисциплина бьет класс. Иди на тренировку! 🏋️‍♂️"
+        ]
+        import random
+        print(Fore.CYAN + random.choice(quotes))
 
 
 if __name__ == "__main__":
