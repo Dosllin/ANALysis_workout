@@ -2,11 +2,13 @@ from src.analysis import Analysis
 from src.data_loader import create_data, load_data
 from src.decorators import format_output
 from colorama import init, Fore
+
 init(autoreset=True)
 
 
 def pause():
     input("\n[Нажмите Enter, чтобы продолжить...]")
+
 
 def print_banner():
     banner = """
@@ -20,7 +22,6 @@ def print_banner():
     """
     # Если используешь colorama, оберни в Fore.CYAN
     print(Fore.CYAN + banner)
-
 
 
 @format_output('Подменю', False)
@@ -60,7 +61,8 @@ def menu_progress_analysis(analys):
                     dict_exercise[exercise] = changes
             if dict_exercise != {}:
                 exercise_with_max_changes, weight = max(dict_exercise.items(), key=lambda x: x[1])
-                print(Fore.CYAN + f'🏆 Максимальный прогресс упражнения: {exercise_with_max_changes}: {weight:+0.1f}, кг.')
+                print(
+                    Fore.CYAN + f'🏆 Максимальный прогресс упражнения: {exercise_with_max_changes}: {weight:+0.1f}, кг.')
             else:
                 print(Fore.RED + 'Нет данных за данный временной период для всех упражнений')
             pause()
@@ -80,7 +82,7 @@ def menu_progress_analysis(analys):
                             time_period = int(input('Введите временной период'))
                             break
                         except ValueError:
-                            print(Fore.RED +'Введите число!')
+                            print(Fore.RED + 'Введите число!')
                     print(Fore.GREEN + "Настройки сохранены!")
                     pause()
                 elif user_command == '1':
@@ -104,7 +106,7 @@ def analysis_menu(analys):
     # Подмен с выводами анализов
     while True:
         print("\n 📊  МЕНЮ АНАЛИТИКИ И ВЫВОДОВ")
-        print("1. 📈 Прогресс в упражнении (Разница весов)",
+        print("1. 📋 Прогресс в упражнении (Разница весов)",
               "2. ⚖️  Баланс тренировочного плана (Сплит-анализ)",
               "3. 🏆 Самый продуктивный месяц (Макс. Тоннаж)",
               "4. 🧠 Влияние тяжести",
@@ -112,6 +114,7 @@ def analysis_menu(analys):
               "6. 📉 Анализ стабильности весов (Numpy)",
               '7. 🩸 Выдача "хардкорных" дней',
               "8. 🏆 Достижения",
+              "9. 📈 Построить график прогресса",
               "0. 🔙 Вернуться в главное меню", sep='\n')
         user_command = input("Выберите номер вывода (0-7): ")
         if user_command == '0':
@@ -151,13 +154,18 @@ def analysis_menu(analys):
                             continue
 
                     print('#' * 50)
-                    for day in analys.get_hardcore_day(user_rpe):
+                    for day in analys.get_hardcore_days(user_rpe):
                         print(f'-{day}')
                     print('#' * 50)
                     pause()
             elif user_command == '8':
                 analys.get_achievements()
                 pause()
+            elif user_command == '9':
+                print("Доступные упражнения:", ', '.join(analys.df['Exercise'].unique()))
+                user_ex = input("Введите упражнение: ")
+                analys.plot_graph(user_ex)
+
 
         except Exception as e:
             print(f'Произошла ошибка при анализе: {e}')
@@ -184,4 +192,3 @@ def interactive_menu():
             break
         else:
             print(Fore.RED + "Такой команды не существует!")
-
