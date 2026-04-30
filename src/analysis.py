@@ -199,6 +199,30 @@ class Analysis(object):
 
         return result
 
+    @format_output("ЗАЛ СЛАВЫ (ТВОИ ДОСТИЖЕНИЯ)")
+    def get_achievements(self):
+        achievements = []
+
+        if self.df['Weight_kg'].max() >= 100:
+            achievements.append("🏅 light weight baby (Взят вес 100+ кг)")
+
+        if self.df['Duration_min'].max() >= 90:
+            achievements.append("🏃 Марафонец (Тренировка 1.5+ часа)")
+
+        if 10.0 in self.df['RPE'].values:
+            achievements.append("🔥 Безумец (Тренировка на RPE 10 - полный отказ)")
+
+        if len(self.df) >= 50:
+            achievements.append("🦍 Ветеран качалки (Больше 50 подходов в базе данных)")
+
+        if self.df['Reps'].max() >= 20:
+            achievements.append("🎈 Король Пампа: Выполнено 20+ повторений в одном подходе (жжение обеспечено!)")
+
+        if not achievements:
+            return "У тебя пока нет ачивок. Продолжай тренироваться!"
+
+        return "\n".join(achievements)
+
     # Генераторы
     def unique_exercise(self):
         exercises = self.df['Exercise'].unique()
@@ -210,3 +234,5 @@ class Analysis(object):
         for day, rpe in days.items():
             if rpe >= user_rpe:
                 yield f'Хардкорный день: {day.strftime("%d.%m.%Y")} с RPE {rpe:.1f}/10'
+
+
