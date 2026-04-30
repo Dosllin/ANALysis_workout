@@ -1,32 +1,37 @@
 from datetime import datetime
 import os
 import pandas as pd
+from colorama import init, Fore
+
+init(autoreset=True)
+
 
 def check_data():
     if not os.path.exists('workout_data.csv'):
         print("Нужно создать базу тренеровок!")
-        df = pd.DataFrame(columns=['Date', 'Workout_Split', 'Exercise', 'Sets', 'Reps', 'Weight_kg', 'RPE', 'Duration_min'])
+        df = pd.DataFrame(
+            columns=['Date', 'Workout_Split', 'Exercise', 'Sets', 'Reps', 'Weight_kg', 'RPE', 'Duration_min'])
         create_data(df)
 
+
 def create_data(df):
-    # df = pd.read_csv('workout_data.csv')
-    print("=== Режим добавления тренировок ===")
+    print(Fore.CYAN + "=== Режим добавления тренировок ===")
 
     while True:
         user_data = input("\nВведите дату тренировки в формате ГГГГ-ММ-ДД или stop если хотите остановиться: ")
 
         if user_data.lower() == 'stop':
             if len(df) == 0:
-                print("В базе пока нет данных, введите хотя бы 1 тренировку!")
+                print(Fore.RED + "В базе пока нет данных, введите хотя бы 1 тренировку!")
                 continue
             else:
                 break
 
-
         try:
-            date = datetime.strptime(user_data, '%Y-%m-%d')
+            valid_date = datetime.strptime(user_data, '%Y-%m-%d')
+            date = valid_date.strftime('%Y-%m-%d')
         except ValueError:
-            print('Некоретный ввод даты, пример даты: 2021-12-31')
+            print(Fore.RED +'Некоретный ввод даты, пример даты: 2021-12-31')
             continue
         workout_split = input("Введите тип тренировки (Chest/Triceps, Back/Biceps, Legs/Shoulders): ")
         exercise = input("Введите конкретное упражнение (Deadlift, Pull-up, Squat и т.д.): ")
@@ -36,14 +41,14 @@ def create_data(df):
                 reps = int(input("Введите количество повторений в подходе: "))
                 break
             except ValueError:
-                print('Введите целое число!!!')
+                print(Fore.RED + 'Введите целое число!!!')
 
         while True:
             try:
                 weight_kg = float(input("Введите рабочий вес (kg): "))
                 break
             except ValueError:
-                print('Введите число (Можно не целое, например 40.1)!!!!')
+                print(Fore.RED +'Введите число (Можно не целое, например 40.1)!!!!')
 
         while True:
             try:
@@ -53,14 +58,14 @@ def create_data(df):
                 else:
                     print('Введите число от 1-10!!!!')
             except ValueError:
-                print('Введите целое число!!!')
+                print(Fore.RED +'Введите целое число!!!')
 
         while True:
             try:
                 duration_min = int(input("Введите общая длительность тренировки (min): "))
                 break
             except ValueError:
-                print("Введите целое число!")
+                print(Fore.RED +"Введите целое число!")
 
         new_row = {
             'Date': date,
@@ -74,10 +79,11 @@ def create_data(df):
         }
 
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        print("Тренировка успешно добавлена!")
+        print(Fore.GREEN + "Тренировка успешно добавлена!")
 
     df.to_csv('workout_data.csv', index=False)
-    print(f"\n💾 Данные успешно сохранены в 'workout_data.csv'. Всего записей: {len(df)}")
+    print(Fore.GREEN + f"\n💾 Данные успешно сохранены в 'workout_data.csv'. Всего записей: {len(df)}")
+
 
 def load_data(check_y_or_n=True):
     if check_y_or_n:
