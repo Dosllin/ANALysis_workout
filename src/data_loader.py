@@ -79,6 +79,7 @@ def create_data(df):
     df.to_csv('workout_data.csv', index=False)
     print(f"\n💾 Данные успешно сохранены в 'workout_data.csv'. Всего записей: {len(df)}")
 
-def load_data():
-    check_data()
+def load_data(check_y_or_n=True):
+    if check_y_or_n:
+        check_data()
     return pd.read_csv('workout_data.csv')
