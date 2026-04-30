@@ -1,6 +1,7 @@
 import pandas as pd
-
+from src.decorators import log_action, format_output
 from src.data_loader import load_data
+
 
 #Двнные доступные мне:
 # Date - дата тренировки
@@ -33,7 +34,7 @@ class Analysis(object):
         if not self._valid_col():
             raise ValueError("DataFrame columns have incorrect types")
 
-
+    @log_action
     def _valid_col(self):
         try:
             is_date = pd.api.types.is_datetime64_any_dtype(self.df['Date'])
@@ -44,11 +45,13 @@ class Analysis(object):
         except KeyError:  # Если какой-то колонки вообще нет
             return False
 
+    @log_action
     def _converter(self):
-        self.df['Date'] = pd.to_datetime(df['Date'])
-        self.df['Month_Number'] = df['Date'].dt.month
-        self.df['Year'] = df['Date'].dt.year
+        self.df['Date'] = pd.to_datetime(self.df['Date'])
+        self.df['Month_Number'] = self.df['Date'].dt.month
+        self.df['Year'] = self.df['Date'].dt.year
 
+    @log_action
     def max_weight_changes(self, exercise, time_period = 5):
         start_month = min(self.df['Date']).month
         end_month = start_month +  time_period
@@ -59,15 +62,17 @@ class Analysis(object):
 
         first_month = self.df.query('Month_Number == @start_month and Year == @start_year and Exercise == @exercise')['Weight_kg'].mean()
         if pd.isna(first_month):
-            print('No data for the first month with this exercise')
-            return
+            return ('No data for the first month with this exercise')
+
         last_month = self.df.query('Month_Number == @end_month and Year == @end_year and Exercise == @exercise')['Weight_kg'].mean()
         if pd.isna(last_month):
-            print('No data for the last month with this exercise')
-            return
+            return ('No data for the last month with this exercise')
+
 
         return last_month - first_month
 
+    @log_action
+    @format_output('Сбалансированность плана')
     def hard_exercise(self):
         stats = self.df.groupby('Workout_Split').agg({'Duration_min': 'mean', 'RPE': 'mean'})
         max_duration_min = stats['Duration_min'].max()
@@ -91,6 +96,8 @@ class Analysis(object):
                     f"\n Самый тяжелый день по RPE: {hardest_split} ({max_rpe:.1f}/10)"
                     f"Самый долгий день: {longest_split} ({max_duration_min:.1f} мин)")
 
+    @log_action
+    @format_output('ЛУЧШИЙ МЕСЯЦ')
     def max_weight(self):
         self.df['Tonnage'] = self.df['Sets'] * self.df['Reps'] * self.df['Weight_kg']
         monthly_tonnage = self.df.groupby(['Year', 'Month_Number'])['Tonnage'].sum()
@@ -119,6 +126,8 @@ class Analysis(object):
             return (f"Самым продуктивным месяцем стал {month_name} {best_year} года: "
                     f"суммарно было поднято {int(best_tonnage)} кг. железа.")
 
+    @log_action
+    @format_output('ВЛИЯНИЕ ТЯЖЕСТИ (RPE)')
     def rpe_correlation(self):
         hard_exercises = ['Squat', 'Deadlift', 'Bench Press']  # Сложные упражнения
         easy_exercises = ['Tricep Extension', 'Barbell Curl']  # Полегче упражнения
@@ -139,6 +148,8 @@ class Analysis(object):
             return (f"Уровень напряжения (RPE) одинаков для всех групп мышц "
                     f"Тяжёлая база: {hard_rpe:.1f}/10, упражнения на руки: {easy_rpe:.1f}/10")
 
+    @log_action
+    @format_output('ПИКОВЫЙ ДЕНЬ')
     def pick_activiti(self):
         if "Tonnage" not in self.df.columns:
             self.df['Tonnage'] = self.df['Sets'] * self.df['Reps'] * self.df['Weight_kg']
