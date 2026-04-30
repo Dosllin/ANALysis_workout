@@ -1,9 +1,14 @@
+from unittest import result
+
 import pandas as pd
+import numpy as np
+from numpy.ma.extras import median
+
 from src.decorators import log_action, format_output
 from src.data_loader import load_data
 
 
-#Двнные доступные мне:
+# Двнные доступные мне:
 # Date - дата тренировки
 # Workout_Split - тип тренировки (Грудь/Трицепс, Спина/Бицепс, Ноги/Плечи)
 # Exercise - конкретное упражнение (Жим лежа, Присед, Становая и т.д.)
@@ -52,22 +57,23 @@ class Analysis(object):
         self.df['Year'] = self.df['Date'].dt.year
 
     @log_action
-    def max_weight_changes(self, exercise, time_period = 5):
+    def max_weight_changes(self, exercise, time_period=5):
         start_month = min(self.df['Date']).month
-        end_month = start_month +  time_period
+        end_month = start_month + time_period
         start_year = min(self.df['Date']).year
         end_year = min(self.df['Date']).year + end_month // 12
         while end_month > 12:
             end_month = end_month - 12
 
-        first_month = self.df.query('Month_Number == @start_month and Year == @start_year and Exercise == @exercise')['Weight_kg'].mean()
+        first_month = self.df.query('Month_Number == @start_month and Year == @start_year and Exercise == @exercise')[
+            'Weight_kg'].mean()
         if pd.isna(first_month):
             return ('No data for the first month with this exercise')
 
-        last_month = self.df.query('Month_Number == @end_month and Year == @end_year and Exercise == @exercise')['Weight_kg'].mean()
+        last_month = self.df.query('Month_Number == @end_month and Year == @end_year and Exercise == @exercise')[
+            'Weight_kg'].mean()
         if pd.isna(last_month):
             return ('No data for the last month with this exercise')
-
 
         return last_month - first_month
 
@@ -82,19 +88,20 @@ class Analysis(object):
         min_rpe = stats['RPE'].min()
         rpe_dif = max_rpe - min_rpe
         if duration_dif < 5 and rpe_dif < 0.5:
-            return (f"План сбалансирован: среднее время всех сплитов варьируется от {min_duration_min:.1f} до {max_duration_min:.1f} мин"
-                f"Субъективная тяжесть (RPE) также равномерна: {min_rpe:.1f} - {max_rpe:.1f} из 10")
+            return (
+                f"План сбалансирован: среднее время всех сплитов варьируется от {min_duration_min:.1f} до {max_duration_min:.1f} мин"
+                f"\nСубъективная тяжесть (RPE) также равномерна: {min_rpe:.1f} - {max_rpe:.1f} из 10")
         else:
             hardest_split = stats['RPE'].idxmax()
             longest_split = stats['Duration_min'].idxmax()
             print()
             if hardest_split == longest_split:
                 return ("Обнаружен дисбаланс в тренировочном плане!"
-                    f'\nТренировки {hardest_split} объективно самые тяжелые: они длятся {max_duration_min:.1f} мин. и имеют самый высокий средний показатель тяжести (RPE {max_rpe:.1f}/10)')
+                        f'\nТренировки {hardest_split} объективно самые тяжелые: они длятся {max_duration_min:.1f} мин. и имеют самый высокий средний показатель тяжести (RPE {max_rpe:.1f}/10)')
             else:
                 return ("Обнаружен дисбаланс в тренировочном плане!"
-                    f"\n Самый тяжелый день по RPE: {hardest_split} ({max_rpe:.1f}/10)"
-                    f"Самый долгий день: {longest_split} ({max_duration_min:.1f} мин)")
+                        f"\n Самый тяжелый день по RPE: {hardest_split} ({max_rpe:.1f}/10)"
+                        f"Самый долгий день: {longest_split} ({max_duration_min:.1f} мин)")
 
     @log_action
     @format_output('ЛУЧШИЙ МЕСЯЦ')
@@ -163,13 +170,42 @@ class Analysis(object):
                 f"В этот день суммарный поднятый вес превысил: {int(max_tonnage)} кг. за сессию\n"
                 f"Тренировка длилась рекордные {int(max_duration)} минут, а средняя тяжесть (RPE) составила {avg_rpe:.1f}/10")
 
+    @log_action
+    @format_output("Стабильность весов")
+    def weight_stability(self, exercise):  # Сделанно специально для numpy (●'◡'●)
+        ex_data = self.df[self.df['Exercise'] == exercise]['Weight_kg']
+        weight_arr = np.array(ex_data)
+
+        if len(weight_arr) == 0:
+            return f'Нет данных для упражнения: {exercise}'
+
+        mean_weight = np.mean(weight_arr)
+        std_weight = np.std(weight_arr)
+        median_weight = np.median(weight_arr)
+
+        result = (f'Упражнение: {exercise}\n'
+                  f'Средний вес: {mean_weight:.2f}\n'
+                  f'Медианна веса: {std_weight:.2f}\n'
+                  f'Разброс вессов: {median_weight:.2f}\n')
+
+        if std_weight < 2.5:
+            result += 'Вывод: Веса очень стабильные, ты прогрессируешь плавно и без откатов'
+        elif std_weight < 7.5:
+            result += 'Вывод: Нормальный разброс весов, идет классическая гипертрофия '
+        elif std_weight == 0:
+            result += 'Вывод: Прогресса нет!'
+        else:
+            result += 'Вывод: Внимание! Сильный разброс весов! Возможно нарушение режима востоновления или техники '
+
+        return result
+
     # Генераторы
     def unique_exercise(self):
         exercises = self.df['Exercise'].unique()
         for exercise in exercises:
             yield exercise
 
-    def get_hardcore_day(self, user_rpe = 9.0):
+    def get_hardcore_day(self, user_rpe=9.0):
         days = self.df.groupby('Date')['RPE'].mean()
         for day, rpe in days.items():
             if rpe >= user_rpe:
