@@ -2,21 +2,16 @@ import argparse
 from fake_progress_bars import progress_bar
 from src.analysis import Analysis
 from src.data_loader import create_data, load_data
-from src.decorators import format_output
 from src.display import interactive_menu
 from colorama import init, Fore
-init(autoreset=True)
 
+init(autoreset=True)
 
 
 # checklist
 #
 # pytest - in_process
 # visual - in_process
-
-
-
-
 
 
 def main():
@@ -94,10 +89,10 @@ def main():
                 break
             except ValueError:
                 continue
-        print('#'*50)
-        for day in analys.get_hardcore_day(user_rpe):
+        print('#' * 50)
+        for day in analys.get_hardcore_days(user_rpe):
             print(f'-{day}')
-        print('#'*50)
+        print('#' * 50)
 
     elif args.command == 'motivation':
         quotes = [
