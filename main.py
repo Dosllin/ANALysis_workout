@@ -2,7 +2,7 @@ import argparse
 from fake_progress_bars import progress_bar
 from src.analysis import Analysis
 from src.data_loader import create_data, load_data
-from src.display import interactive_menu
+from src.display import interactive_menu, analysis_menu
 from colorama import init, Fore
 
 init(autoreset=True)
